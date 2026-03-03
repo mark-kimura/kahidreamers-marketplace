@@ -1,0 +1,21 @@
+{
+  "name": "kahidreamers-marketplace",
+  "description": "Claude Code plugins by KahiDreamers",
+  "owner": {
+    "name": "Mark Kimura"
+  },
+  "plugins": [
+    {
+      "name": "consensus",
+      "description": "Get unstuck by querying multiple AI providers (GPT-5.2, Gemini, Kimi K2.5) concurrently",
+      "version": "1.3.2",
+      "author": {
+        "name": "Mark Kimura"
+      },
+      "source": {
+        "source": "github",
+        "repo": "mark-kimura/consensus-plugin"
+      }
+    }
+  ]
+}
