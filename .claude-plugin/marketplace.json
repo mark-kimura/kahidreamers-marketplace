@@ -8,7 +8,7 @@
     {
       "name": "consensus",
       "description": "Get unstuck by querying multiple AI providers (GPT-5.2, Gemini, Kimi K2.5) concurrently",
-      "version": "1.5.0",
+      "version": "1.5.1",
       "author": {
         "name": "Mark Kimura"
       },
