@@ -12,7 +12,7 @@ Claude Code plugin marketplace by Mark Kimura.
 
 | Plugin | Description |
 |--------|-------------|
-| [consensus](https://github.com/mark-kimura/consensus-plugin) | Query multiple AI providers (GPT-5.2, Gemini, Kimi K2.5) concurrently for diverse perspectives |
+| [consensus](https://github.com/mark-kimura/consensus-plugin) | Query multiple AI providers (GPT-5.5, Gemini, DeepSeek V4 Pro) concurrently for diverse perspectives |
 
 ## Installing a Plugin
 

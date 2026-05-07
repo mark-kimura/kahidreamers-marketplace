@@ -7,8 +7,8 @@
   "plugins": [
     {
       "name": "consensus",
-      "description": "Get unstuck by querying multiple AI providers (GPT-5.2, Gemini, DeepSeek V3.2) concurrently",
-      "version": "1.7.1",
+      "description": "Get unstuck by querying multiple AI providers (GPT-5.5, Gemini, DeepSeek V4 Pro) concurrently",
+      "version": "1.7.3",
       "author": {
         "name": "Mark Kimura"
       },
