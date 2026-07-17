@@ -1,0 +1,14 @@
+{
+  "name": "datatrove",
+  "version": "0.1.0",
+  "description": "Discover and analyze U.S. public data with Datatrove (datatrove.ai) from Claude Code — data-discovery chat, deep analyses, your saved threads, the public gallery, and the source catalog.",
+  "author": { "name": "Datatrove", "url": "https://datatrove.ai" },
+  "homepage": "https://datatrove.ai",
+  "keywords": ["data", "open-data", "public-data", "datasets", "analysis", "datatrove"],
+  "mcpServers": {
+    "datatrove": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/dist/index.js"]
+    }
+  }
+}
