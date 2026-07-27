@@ -3,7 +3,7 @@ import os from "node:os";
 import { createHash, randomBytes } from "node:crypto";
 import { spawn } from "node:child_process";
 import { AddressInfo } from "node:net";
-import { API_URL, WEB_URL, saveCreds, clearCreds, loadCreds } from "./util.js";
+import { API_URL, WEB_URL, saveCreds, clearCreds, loadCreds, toApiError } from "./util.js";
 
 const b64url = (b: Buffer): string => b.toString("base64url");
 
@@ -79,8 +79,22 @@ export async function beginLogin(): Promise<{ authorizeUrl: string }> {
         return;
       }
       if (error || !code) {
-        res.writeHead(200, { "Content-Type": "text/html" }).end(CLOSE_PAGE("Authorization cancelled", false));
-        rejectCode(new Error(error || "no_code"));
+        // The authorize page bounces a reason here when it can. The one that
+        // matters is plugin_requires_pro: without this the listener would just
+        // sit until the timeout and then report "you're probably on another
+        // machine", which is actively misleading for a Free account.
+        const proRequired = error === "plugin_requires_pro";
+        res
+          .writeHead(200, { "Content-Type": "text/html" })
+          .end(CLOSE_PAGE(proRequired ? "Pro plan required" : "Authorization cancelled", false));
+        rejectCode(
+          new Error(
+            proRequired
+              ? "The Datatrove plugin for Claude Code is available on Pro and Admin accounts. " +
+                `Your Datatrove account is on the Free plan — see plans at ${WEB_URL}/upgrade.`
+              : error || "no_code",
+          ),
+        );
         return;
       }
       res.writeHead(200, { "Content-Type": "text/html" }).end(CLOSE_PAGE("You're connected", true));
@@ -122,8 +136,10 @@ async function exchange(code: string, verifier: string): Promise<{ email: string
     body: JSON.stringify({ code, code_verifier: verifier, name: `Claude Code (${os.hostname()})` }),
   });
   if (!res.ok) {
-    const b = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(`Token exchange failed: ${b.error || `http_${res.status}`}`);
+    const b = await res.json().catch(() => ({}));
+    // Route through the shared mapper so entitlement/quota codes read the same
+    // here as they do on every other call.
+    throw toApiError(res.status, b);
   }
   const data = (await res.json()) as { token: string; user?: { email?: string | null } };
   saveCreds({ token: data.token, apiUrl: API_URL, email: data.user?.email ?? null });

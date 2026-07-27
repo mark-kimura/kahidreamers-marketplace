@@ -20,7 +20,7 @@
         {
             "name": "datatrove",
             "description": "Discover and analyze U.S. public data with Datatrove (datatrove.ai) from Claude Code — data-discovery chat, deep analyses, your saved threads, the public gallery, and the source catalog.",
-            "version": "0.1.0",
+            "version": "0.2.0",
             "author": {
                 "name": "Mark Kimura"
             },

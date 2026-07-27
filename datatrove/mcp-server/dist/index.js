@@ -15516,17 +15516,57 @@ async function api(pathAndQuery, opts = {}) {
     json = text ? JSON.parse(text) : null;
   } catch {
   }
-  if (!res.ok) {
-    const code = json?.error || `http_${res.status}`;
-    if (res.status === 401) {
-      throw new ApiError(401, code, "Your Datatrove session is invalid or was revoked. Run /datatrove:login to reconnect.");
-    }
-    if (res.status === 402 || code === "plan_required" || code === "quota_exceeded" || code === "analyze_not_allowed") {
-      throw new ApiError(res.status, code, json?.message || `${code} \u2014 this action needs a Pro plan or you've hit a quota. Upgrade at ${WEB_URL}/upgrade.`);
-    }
-    throw new ApiError(res.status, code, json?.message || code);
-  }
+  if (!res.ok) throw toApiError(res.status, json);
   return json;
+}
+function whenResets(iso) {
+  if (typeof iso !== "string") return null;
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleString();
+}
+function toApiError(status, json) {
+  const code = json?.error || `http_${status}`;
+  if (status === 401) {
+    return new ApiError(401, code, "Your Datatrove session is invalid or was revoked. Run /datatrove:login to reconnect.");
+  }
+  if (code === "plugin_requires_pro") {
+    return new ApiError(
+      status,
+      code,
+      `${json?.message ?? "The Datatrove plugin for Claude Code is available on Pro and Admin accounts."} See plans at ${json?.upgradeUrl ?? `${WEB_URL}/upgrade`}.`
+    );
+  }
+  if (code === "daily_limit_exceeded" || code === "monthly_limit_exceeded") {
+    const period = code === "monthly_limit_exceeded" ? "monthly" : "daily";
+    const scope = code === "monthly_limit_exceeded" ? "combined across the web app and this plugin" : json?.surface === "cli" ? "for the plugin (the web app has a separate allowance)" : "for the web app";
+    const used = typeof json?.count === "number" && typeof json?.cap === "number" ? ` (${json.count}/${json.cap})` : "";
+    const at = whenResets(json?.resetsAt);
+    return new ApiError(
+      status,
+      code,
+      `You've reached your ${period} Datatrove chat limit${used} ${scope}.` + (at ? ` It resets ${at}.` : "") + ` See plans at ${WEB_URL}/upgrade.`
+    );
+  }
+  if (code === "quota_exceeded") {
+    const used = typeof json?.count === "number" && typeof json?.cap === "number" ? ` (${json.count}/${json.cap})` : "";
+    const at = whenResets(json?.resetsAt);
+    return new ApiError(
+      status,
+      code,
+      `You've used your monthly Datatrove analysis quota${used}.` + (at ? ` It resets ${at}.` : "") + ` See plans at ${WEB_URL}/upgrade.`
+    );
+  }
+  if (status === 402 || code === "plan_required" || code === "analyze_not_allowed") {
+    return new ApiError(
+      status,
+      code,
+      json?.message || `${code} \u2014 this action needs a Pro plan. See plans at ${WEB_URL}/upgrade.`
+    );
+  }
+  if (status === 429) {
+    return new ApiError(status, code, json?.message || "Datatrove is rate-limiting this request. Try again shortly.");
+  }
+  return new ApiError(status, code, json?.message || code);
 }
 function requireState(state) {
   return state || DEFAULT_STATE;
@@ -15588,8 +15628,13 @@ async function beginLogin() {
         return;
       }
       if (error2 || !code) {
-        res.writeHead(200, { "Content-Type": "text/html" }).end(CLOSE_PAGE("Authorization cancelled", false));
-        rejectCode(new Error(error2 || "no_code"));
+        const proRequired = error2 === "plugin_requires_pro";
+        res.writeHead(200, { "Content-Type": "text/html" }).end(CLOSE_PAGE(proRequired ? "Pro plan required" : "Authorization cancelled", false));
+        rejectCode(
+          new Error(
+            proRequired ? `The Datatrove plugin for Claude Code is available on Pro and Admin accounts. Your Datatrove account is on the Free plan \u2014 see plans at ${WEB_URL}/upgrade.` : error2 || "no_code"
+          )
+        );
         return;
       }
       res.writeHead(200, { "Content-Type": "text/html" }).end(CLOSE_PAGE("You're connected", true));
@@ -15628,7 +15673,7 @@ async function exchange(code, verifier) {
   });
   if (!res.ok) {
     const b = await res.json().catch(() => ({}));
-    throw new Error(`Token exchange failed: ${b.error || `http_${res.status}`}`);
+    throw toApiError(res.status, b);
   }
   const data = await res.json();
   saveCreds({ token: data.token, apiUrl: API_URL, email: data.user?.email ?? null });

@@ -2,6 +2,25 @@
 
 Discover and analyze U.S. public data with [Datatrove](https://datatrove.ai) directly from Claude Code. After a one-time browser sign-in, you (and Claude, agentically) can run data-discovery chat, request deep analyses, browse your saved threads and the public gallery, and query the source catalog — handy when you're working on your own data locally and want to fold in public datasets.
 
+## Requires a Datatrove Pro account
+
+The plugin is available on **Pro** and **Admin** accounts. Free accounts can use
+datatrove.ai in the browser, but `/datatrove:login` will decline with a link to
+[plans](https://datatrove.ai/upgrade).
+
+Pro gets the plugin its **own daily allowance**, separate from the web app —
+plugin sessions are bursty, so the plugin budget is more generous than the web
+one, and the two do not eat each other. A combined monthly ceiling applies
+across both surfaces. Current numbers are always live at
+`https://api.datatrove.ai/api/plans`; at time of writing:
+
+| | web app | this plugin | combined ceiling |
+|---|---|---|---|
+| Pro chat | 100/day | **250/day** | 500/month |
+| Analyses | 25/month, shared across both surfaces | | |
+
+Admin accounts are unlimited.
+
 ## Commands
 
 | Command | What it does |
@@ -16,12 +35,16 @@ Discover and analyze U.S. public data with [Datatrove](https://datatrove.ai) dir
 
 Claude can also use the underlying tools on its own — e.g. "find California housing data and analyze the trend" will chain discovery → analysis.
 
-## Install (local)
+## Install
 
-From the repo that contains this `plugin/` directory:
+```
+/plugin install datatrove@kahidreamers-marketplace
+```
+
+For local development against a checkout of this repo instead:
 
 ```bash
-claude --plugin-dir ./plugin
+claude --plugin-dir ./datatrove
 ```
 
 Then in Claude Code run `/datatrove:login` and approve in the browser.
